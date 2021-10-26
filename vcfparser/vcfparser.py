@@ -314,7 +314,7 @@ def main():
 
         #filter master metadata based on VOC name parameter
         VOCmeta_df = VOCmeta_df_full[VOCmeta_df_full.VOC == vocname].copy()
-        VOCmeta_df.sort_values(by=['Position'], inplace=True)
+        #VOCmeta_df.sort_values(by=['Position'], inplace=True)
         VOCmeta_df["NucName+AAName"] = VOCmeta_df["NucName"] + "|" + VOCmeta_df["AAName"]
 
         if args.signature_snvs_only:
@@ -553,7 +553,7 @@ def main():
 
 
         #DEBUG
-        VOCmeta_df.sort_values("Position",inplace=True)
+        #VOCmeta_df.sort_values("Position",inplace=True)
         #VOCmeta_df.to_csv("heatmap_data2plot_{}.tsv".format(vocname),sep="\t")
 
         VOCmeta_df.to_excel(heatmap_data_excel_writer,
