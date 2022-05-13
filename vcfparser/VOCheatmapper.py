@@ -135,17 +135,14 @@ def annotate_heatmap(im, data=None, valfmt="{x:.2f}",
             value =  valfmt(data[i, j], None)
             #value = 0 a given mutation was not found in the
             if covdata:
-<<<<<<< HEAD
                 #print("Frequency value {} and coverage {}".format(value, covdata[j][i]))
                 if float(value) == 0.000 and covdata[j][i] != 0: #SNV not present in vcf/tsv input but covered by reads
                     value = ""
                 elif covdata[j][i] == 0.000: #SNV has no reads that span that position
-=======
-                print("Frequency value {} and coverage {}".format(value, covdata[j][i]))
+                    print("Frequency value {} and coverage {}".format(value, covdata[j][i]))
                 if float(value) == 0.0 and float(covdata[j][i]) != 0.0: #SNV not present in vcf/tsv input but covered by reads
                     value = ""
                 elif float(covdata[j][i]) == 0.0: #SNV has no reads that span that position
->>>>>>> 670c792d9e09e2c7594160748da782a9c26b749d
                     value = "NC"
                 elif float(covdata[j][i]) < float(min_depth): #Coverage is belog a given threshold
                     value = "LC"
@@ -154,15 +151,8 @@ def annotate_heatmap(im, data=None, valfmt="{x:.2f}",
                 if float(value) == 0.0:
                     value = ""
 
-
-
-
             text = im.axes.text(j, i, value, **kw)
             texts.append(text)
-
-
-
-
 
     return texts
 
