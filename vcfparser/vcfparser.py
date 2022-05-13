@@ -7,11 +7,11 @@ import matplotlib.pyplot as plt
 
 
 #for testing
-import VOCheatmapper as VOCheatmapper
-import BAMutilities as BAMutilities
+#import VOCheatmapper as VOCheatmapper
+#import BAMutilities as BAMutilities
 
-#import vcfparser.VOCheatmapper as VOCheatmapper
-#import vcfparser.BAMutilities as BAMutilities
+import vcfparser.VOCheatmapper as VOCheatmapper
+import vcfparser.BAMutilities as BAMutilities
 
 #constants
 support_ext = ["txt","tsv","vcf", "bam"]
