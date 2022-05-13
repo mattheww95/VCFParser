@@ -1,12 +1,17 @@
 #!/usr/bin/env python
+from curses.ascii import alt
 import pandas as pd
 import argparse, warnings
 import os, re, json
 import matplotlib.pyplot as plt
 
 
-import vcfparser.VOCheatmapper as VOCheatmapper
-import vcfparser.BAMutilities as BAMutilities
+#for testing
+import VOCheatmapper as VOCheatmapper
+import BAMutilities as BAMutilities
+
+#import vcfparser.VOCheatmapper as VOCheatmapper
+#import vcfparser.BAMutilities as BAMutilities
 
 #constants
 support_ext = ["txt","tsv","vcf", "bam"]
@@ -120,7 +125,7 @@ def parse_input_text_file(batch_file_path):
         raise Exception("Missing file path in the TSV/VCF files column. Check format of {}. Possible extra space or missing tab".format(batch_file_path))
 
     if any(input_files_df["variants_path"].duplicated()):
-        print(input_files_df.loc[input_files_df["variants_path"].duplicated(),"variant_path"])
+        # print(input_files_df.loc[input_files_df["variants_path"].duplicated(),"variant_path"])
         raise Exception("Duplicated file path in TSV/VCF files path column. Check {}".format(batch_file_path))
 
     if any(input_files_df["sample_name"].duplicated()):
@@ -234,9 +239,10 @@ def main():
     if args.clear_cov_cache:
         if os.path.exists('.cache_snv_coverages.json'):
             os.remove('.cache_snv_coverages.json')
-            print("INFO: SNV coverage cache file erased (.cache_snv_coverages.json). Done. Ready to run new analysis")
+            #print("INFO: SNV coverage cache file erased (.cache_snv_coverages.json). Done. Ready to run new analysis")
         else:
-            print("INFO: No cache to erase. Done")
+            #print("INFO: No cache to erase. Done")
+            ...
         exit(0)
 
     cache_site_coverages_dict={} #dictionary with prior SNV coverages per sample. Only used with --cached parameter
@@ -264,7 +270,7 @@ def main():
             with open('.cache_snv_coverages.json', 'r') as fp:
                 cache_site_coverages_dict = json.load(fp)
         except Exception as e:
-            print("JSON cache file read error {}".format(e))
+            #print("JSON cache file read error {}".format(e))
             cache_site_coverages_dict = {}
             pass
 
@@ -309,7 +315,7 @@ def main():
 
     #plots are based on VOCs containing several samples (main VOC plot loop)
     for vocname in vocnames:
-        print("Starting heatmap building for VOC {} on {} samples".format(vocname, len(args.input)))
+        #print("Starting heatmap building for VOC {} on {} samples".format(vocname, len(args.input)))
         read_coverages_2Darray = []
 
         #filter master metadata based on VOC name parameter
@@ -337,9 +343,9 @@ def main():
 
             if inputtype == "vcf":
                 skip_line_n, vcf_source = find_vcf_headerline_source(sample_path)
-                print("VCF source {}\nSelected VOC:{}".format(vcf_source, vocname))
+                #print("VCF source {}\nSelected VOC:{}".format(vcf_source, vocname))
                 vcf_df = pd.read_csv(sample_path, sep="\t", skiprows=skip_line_n)
-                print("INFO: Classifying each SNV in VCF {}".format(sample_path))
+                #print("INFO: Classifying each SNV in VCF {}".format(sample_path))
                 #adding +1 extra positions in case it is vcf from ncov-tools and +1 position error in deletions reporting
                 positions = VOCmeta_df["Position"].to_list()+\
                     [i+1 for i in VOCmeta_df["Position"].to_list()]
@@ -388,20 +394,25 @@ def main():
 
                 #would work as positions in meta and vcf_df match Empty DataFrame should not happen due to position discrep
                 Ref_Alt_df = VOCmeta_df[ metadata_pos_idx ][["Ref","Alt"]]
-
-
+                alt_allele_list = VOCmeta_df.loc[VOCmeta_df["Position"] == vcf_df.loc[row_idx_vcf, "POS"]]["Alt"].to_list()
                 if not Ref_Alt_df.empty:
-                    Ref,Alt = Ref_Alt_df.values[0]
+                    #Ref,Alt = Ref_Alt_df.values[0]
+                    for Ref,Alt in Ref_Alt_df.values:
+                        
+                        #Ref,Alt = Ref_Alt_df.values[idx]
+                        if not all(vcf_df.loc[row_idx_vcf, ["REF","ALT"]] == [Ref,Alt]):
+                            if vcf_df.loc[row_idx_vcf, "ALT"] not in alt_allele_list:
+                                print(f"Could not find {vcf_df.loc[row_idx_vcf, 'ALT']} in {alt_allele_list}")
+                                vcf_selected_idx[row_idx_vcf]=False #change selection index to false bool
                 else:
                     raise Exception("No matches for position {} in metadata".format(vcf_df.loc[row_idx_vcf, "POS"]))
 
 
-                if not all(vcf_df.loc[row_idx_vcf, ["REF","ALT"]] == [Ref,Alt]):
-                    print("WARNING: Position {} REF and ALT allele mismatch with the metadata. {}/{} (VCF) vs {}/{} (META)".format(
-                            vcf_df.loc[row_idx_vcf,"POS"],vcf_df.loc[row_idx_vcf, "REF"],
-                            vcf_df.loc[row_idx_vcf, "ALT"],Ref,Alt))
-
-                    vcf_selected_idx[row_idx_vcf]=False #change selection index to false bool
+               
+                        #print("WARNING: Position {} REF and ALT allele mismatch with the metadata. {}/{} (VCF) vs {}/{} (META)".format(
+                        #vcf_df.loc[row_idx_vcf,"POS"],vcf_df.loc[row_idx_vcf, "REF"],
+                        #vcf_df.loc[row_idx_vcf, "ALT"],Ref,Alt))
+                    
 
             #filter Deletions separately just by position and deletion length
             #makes compatible with iVar and Virontus pipeline formats
@@ -465,17 +476,17 @@ def main():
             vcf_df_temp.to_csv("vcf_df_debug_{}_VOC-{}.txt".format(input_file_name, vocname),sep="\t")
             #print(VOCmetaNotFound[["VOC","Position","NucName"]])
             #print(input_file_name)
-            if len(vcf_df_temp.index) != 0:
-                print("In sample {}, a total of {} SNVs were not found for VOC {}:\n {}".format(
-                    input_file_name,
-                    VOCmetaNotFound.shape[0], vocname,
-                    VOCmetaNotFound[["NucName", "AAName", "Position"]].to_string(index=False)
-                    ))
+#            if len(vcf_df_temp.index) != 0:
+                #print("In sample {}, a total of {} SNVs were not found for VOC {}:\n {}".format(
+                    #input_file_name,
+                    #VOCmetaNotFound.shape[0], vocname,
+                    #VOCmetaNotFound[["NucName", "AAName", "Position"]].to_string(index=False)
+                    #))
 
-            if len(vcf_df_temp.index) == 0:
-                warnings.warn("Zero SNVs found in sample {} for {} VOC SNVs."
-                              "Might be an interesting sample or issue with input ... ".format(input_file_name,
-                                                                                               vocname))
+#            if len(vcf_df_temp.index) == 0:
+#                warnings.warn("Zero SNVs found in sample {} for {} VOC SNVs."
+#                              "Might be an interesting sample or issue with input ... ".format(input_file_name,
+#                                                                                               vocname))
 
 
             if args.stat_filter_snvs and "FILTER" in vcf_df_temp.columns:
@@ -565,13 +576,13 @@ def main():
             vcf_df_cleaned.loc[0, "CHROM"] = "NO MATCHING SNVs"
 
 
-        print("INFO: Writing out {} SNVs to VCF".format(vcf_df_cleaned.shape[0]))
+        #print("INFO: Writing out {} SNVs to VCF".format(vcf_df_cleaned.shape[0]))
         if "ALT_DP" in vcf_df_cleaned.columns:
             vcf_df_cleaned[vcf_df_cleaned["ALT_DP"] >= args.min_depth_coverage].to_csv(output_file_name,
                                                                                        sep="\t",index=False, mode="w")
         else:
             vcf_df_cleaned.to_csv(output_file_name, sep="\t",index=False, mode="w")
-        print("INFO: Trimmed VCF with VOC snvs is written to \"{}\"".format(output_file_name))
+        #print("INFO: Trimmed VCF with VOC snvs is written to \"{}\"".format(output_file_name))
 
 
         if args.annotate and args.bam_files:
@@ -605,7 +616,7 @@ def main():
             plt.tight_layout()
             plt.savefig(heatmapfilename)
             plt.close()
-            print("INFO: Heatmap rendered as {} at {}".format(heatmapfilename, os.getcwd()))
+            #print("INFO: Heatmap rendered as {} at {}".format(heatmapfilename, os.getcwd()))
         else:
             VOCheatmapper.renderplot(VOCmeta_df,
                                      title='{} variant ({}) SNVs'.format(vocname, VOCpangolineage),
@@ -627,15 +638,15 @@ def main():
         heatmapfilename="heatmap-overall-{}.png".format(input_folder_name)
         plt.savefig(heatmapfilename)
         plt.close()
-        print("INFO: Heatmap rendered as {} at {}".format(heatmapfilename, os.getcwd()))
+        #print("INFO: Heatmap rendered as {} at {}".format(heatmapfilename, os.getcwd()))
 
-    print("Data to plot written to Excel file at {}".format(heatmap_data_excel_writer.path))
+    #print("Data to plot written to Excel file at {}".format(heatmap_data_excel_writer.path))
     heatmap_data_excel_writer.close()
 
     if args.bam_files:
         with open('.cache_snv_coverages.json', 'w') as fp:
             fp.write(json.dumps(cache_site_coverages_dict, indent=4))
-    print("Done")
+    #print("Done")
 
 if __name__ == '__main__':
     main()
